@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Header from './src/header'
 import Image from 'next/image'
@@ -22,21 +22,32 @@ const symbols_fr = ["Plan Ascendant","Jardin (noir)","Coeur Noir","Communion","D
                 "Tour","Voyageur","Witness","Ver","Prière"];
 
 var chosen = [];
+var buffer_obk_1 = [];
+var match1 = []; 
+var match2 = [];
+var langu = "en";
 
 export default function Home() {
+    const [obelisks, setObelisks] = useState(false);
+    const [matching, setMatching] = useState(false);
+
     const blurSelected = (param) => {
+      if (!obelisks && !matching)
+        return;
       var current = document.getElementById(param)
-      console.log(current.src)
       if (current.src == "http://localhost:3000/ChosenCard.png") {
         current.src = img_addr[param];
         for (var g = 0; g < 25; g++) {
           if (chosen[g] === param)
-            chosen.splice(g, 1)
+          chosen.splice(g, 1)
         }
       } else {
+        if (chosen.length >= 3)
+          return;
         current.src = "/ChosenCard.png";
         chosen.push(param)
       }
+      displaySelected();
     }
 
     const resetCards = () => {
@@ -45,28 +56,105 @@ export default function Home() {
         card.src = img_addr[y];
         chosen = [];
       }
+      for (var x = 0; x < 3; x++) {
+        var obk = document.getElementById("chosen_"+(x+1))
+        var obk_name = document.getElementById("name_obk_"+(x+1))
+        obk.src = "/ChosenCard.png"
+        obk_name.textContent = '?'
+      }
     }
+
+    const displaySelected = () => {
+      for (var t = 0; t < 3; t++) {
+        var obk_nb = document.getElementById("chosen_"+(t+1))
+        var obk_name = document.getElementById("name_obk_"+(t+1))
+        if (t < chosen.length) {
+          obk_nb.src = img_addr[parseInt(chosen[t])];
+          obk_name.textContent = symbols_en[chosen[t]];
+        } else {
+          obk_nb.src = "/ChosenCard.png";
+          obk_name.textContent = '?';
+        }
+      }
+    }
+
+    const saveObk = () => {
+      buffer_obk_1 = chosen;
+      resetCards();
+    }
+
+    const setEncounter = (param) => {
+      if (param == 1) {
+        setObelisks(true);
+        setMatching(false);
+      } else if (param == 2) {
+        setMatching(true);
+        setObelisks(false);
+      }
+    }
+
+    const obeliskFct = () => {
+      return (
+        <div>
+          <p id = "name_obk_1" className = "obk_name">?</p>
+          <p id = "name_obk_2" className = "obk_name">?</p>
+          <p id = "name_obk_3" className = "obk_name">?</p>
+
+          <div className="trapezoid">
+               <img id = "chosen_1" src = "/ChosenCard.png" className="elem_trap"/>
+               <img id = "chosen_2" src = "/ChosenCard.png" className="elem_trap"/>
+               <img id = "chosen_3" src = "/ChosenCard.png" className="elem_trap"/>
+               <div className="save_bt" onClick={() => saveObk()}>
+                 <p>Save</p>
+               </div>
+           </div>
+        </div>
+      )
+    }
+
+    const matchingFct = () => {
+      return (
+        <div className="matchClass">
+          <h1 style={{marginTop:"13%"}}>Chose 3 and hit "Send"</h1>
+          <p id="match1" className="matchElem">?</p>
+          <p id="match2" className="matchElem">?</p>
+          <p id="match3" className="matchElem">?</p>
+          <div className="save_bt" onClick={() => sendMatch()}>
+            <p style={{paddingTop:"5%"}}>Send</p>
+          </div>
+        </div>
+      )
+    }
+
   return (
     <div className="container">
       <Head>
-        <title>In despite of</title>
+        <title>From the Heavens</title>
         <link rel="icon" href="/votd.png"/>
       </Head>
 
       <Header/>
 
       <div>
-        {/* <div className="title_desc">
-          <p className="title">
-            Pick your symbols
-          </p>
-        </div> */}
         <div className="title_desc" onClick={() => resetCards()}>
           <p className="title">Reset!</p>
+        </div>
+        <div style={{display: "flex", marginTop: "10px"}}>
+          <div className="type_bt" onClick={() => setEncounter("1")}>
+            <p>Obelisk (p1, p2)</p>
+          </div>
+          <div className="type_bt" style={{marginLeft: "80px"}} onClick={() => setEncounter("2")}>
+            <p>Matching (p3, p4)</p>
+          </div>
         </div>
       </div>
     
     <main>
+        {/* <div>
+          <div className="showSave_bt" onClick={() => showSaved()}>
+            <p>Show saved</p>
+          </div>
+        </div> */}
         <div className="icon_grid">
             <img id = "0" src="/AscendantPlane.png" onClick={() => blurSelected('0')}/>
             <img id = "1" src="/BlackGarden.png" onClick={() => blurSelected("1")}/>
@@ -95,6 +183,11 @@ export default function Home() {
             <img id = "24" src="/Worship.png" onClick={() => blurSelected("24")}/>
 
         </div>
+        <div style={{marginBottom: "55px"}}>
+          {obelisks && obeliskFct()}
+          {matching && matchingFct()}
+        </div>
+
     </main>
 
     <footer>
